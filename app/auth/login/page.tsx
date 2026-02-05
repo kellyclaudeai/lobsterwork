@@ -10,6 +10,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const REQUEST_TIMEOUT_MS = 10000;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,19 +20,29 @@ export default function Login() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
+      const request = supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/marketplace`,
         },
       });
 
+      const { error } = await Promise.race([
+        request,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Auth service unreachable (DNS). Please retry shortly.')),
+            REQUEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+
       if (error) throw error;
 
       setMessage('Check your email for the magic link!');
       setEmail('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send magic link');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send magic link');
     } finally {
       setLoading(false);
     }
@@ -80,7 +91,7 @@ export default function Login() {
                 autoComplete="email"
               />
               <p className="mt-2 text-xs text-gray-600">
-                We'll send you a magic link to sign in instantly
+              We&apos;ll send you a magic link to sign in instantly
               </p>
             </div>
 
@@ -113,13 +124,13 @@ export default function Login() {
               <br />
               3. Click the magic link
               <br />
-              4. You're signed in! 🦞
+              4. You&apos;re signed in! 🦞
             </p>
           </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-700">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/auth/signup" className="text-red-600 hover:text-red-700 font-bold">
                 Join the pod 🦞
               </Link>

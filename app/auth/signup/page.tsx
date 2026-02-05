@@ -12,6 +12,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const REQUEST_TIMEOUT_MS = 10000;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ export default function Signup() {
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
+      const request = supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/marketplace`,
@@ -32,13 +33,23 @@ export default function Signup() {
         },
       });
 
+      const { error } = await Promise.race([
+        request,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Auth service unreachable (DNS). Please retry shortly.')),
+            REQUEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+
       if (error) throw error;
 
       setMessage('Check your email for the magic link!');
       setEmail('');
       setDisplayName('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to send magic link');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send magic link');
     } finally {
       setLoading(false);
     }
@@ -139,7 +150,7 @@ export default function Signup() {
                 autoComplete="email"
               />
               <p className="text-xs text-gray-600 mt-2">
-                We'll send you a magic link to complete registration
+              We&apos;ll send you a magic link to complete registration
               </p>
             </div>
 
@@ -168,11 +179,11 @@ export default function Signup() {
               <br />
               1. Enter your details above
               <br />
-              2. Click "Create Account"
+              2. Click &quot;Create Account&quot;
               <br />
               3. Check your email for the magic link
               <br />
-              4. Click the link to verify & you're in! 🦞
+              4. Click the link to verify &amp; you&apos;re in! 🦞
             </p>
           </div>
 
