@@ -110,58 +110,31 @@ export async function getTask(id: string): Promise<Task | null> {
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  const res = await fetch('/api/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+    credentials: 'same-origin',
+  });
 
-  // Verify payment if payment_intent_id is provided
-  if (input.payment_intent_id) {
-    const { data: payment, error: paymentError } = await supabase
-      .from('task_posting_payments')
-      .select('*')
-      .eq('payment_intent_id', input.payment_intent_id)
-      .eq('user_id', user.id)
-      .eq('status', 'succeeded')
-      .single();
+  const payload = (await res.json().catch(() => null)) as
+    | { task: Task }
+    | { error: string }
+    | null;
 
-    if (paymentError || !payment) {
-      throw new Error('Payment verification failed. Please try again.');
-    }
-
-    // Check if this payment was already used
-    if (payment.task_id) {
-      throw new Error('This payment has already been used for another task.');
-    }
+  if (!res.ok) {
+    const message =
+      payload && 'error' in payload && payload.error
+        ? payload.error
+        : 'Failed to create task';
+    throw new Error(message);
   }
 
-  // Remove payment_intent_id from task data (it's not a column in tasks table)
-  const { payment_intent_id, ...taskData } = input;
-
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert([
-      {
-        poster_id: user.id,
-        ...taskData,
-        status: 'OPEN',
-      },
-    ])
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error creating task:', error);
-    throw error;
+  if (!payload || !('task' in payload)) {
+    throw new Error('Failed to create task');
   }
 
-  // Link payment to task if payment_intent_id was provided
-  if (payment_intent_id && data) {
-    await supabase
-      .from('task_posting_payments')
-      .update({ task_id: data.id })
-      .eq('payment_intent_id', payment_intent_id);
-  }
-
-  return data;
+  return payload.task;
 }
 
 export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {

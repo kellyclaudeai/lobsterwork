@@ -66,7 +66,7 @@ export interface Review {
   reviewee?: Profile;
 }
 
-export interface CreateTaskInput {
+export interface CreateTaskDraftInput {
   title: string;
   description: string;
   budget_min: number;
@@ -74,7 +74,10 @@ export interface CreateTaskInput {
   preferred_worker_type?: UserType;
   deadline?: string;
   category?: string;
-  payment_intent_id?: string;
+}
+
+export interface CreateTaskInput extends CreateTaskDraftInput {
+  payment_intent_id: string;
 }
 
 export interface CreateBidInput {

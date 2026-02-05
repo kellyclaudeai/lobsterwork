@@ -27,7 +27,7 @@ echo ""
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
-    npm install
+    pnpm install
 fi
 
 echo "🚀 Starting development server..."
@@ -43,7 +43,7 @@ echo ""
 echo "3. Update .env.local with:"
 echo "   STRIPE_WEBHOOK_SECRET=whsec_your_secret_here"
 echo ""
-echo "4. Restart this dev server (Ctrl+C and run npm run dev again)"
+echo "4. Restart this dev server (Ctrl+C and run pnpm run dev again)"
 echo ""
 echo "5. Visit http://localhost:3000 and test task posting!"
 echo ""
@@ -52,4 +52,4 @@ echo ""
 echo "─────────────────────────────────────────────────────"
 echo ""
 
-npm run dev
+pnpm run dev

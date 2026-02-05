@@ -2,9 +2,10 @@ import { defineConfig } from '@playwright/test';
 
 process.env.PW_USE_CHROMIUM_HEADLESS_SHELL = process.env.PW_USE_CHROMIUM_HEADLESS_SHELL || '0';
 
-const port = process.env.PLAYWRIGHT_PORT ? Number(process.env.PLAYWRIGHT_PORT) : 3000;
+const port = process.env.PLAYWRIGHT_PORT ? Number(process.env.PLAYWRIGHT_PORT) : 3100;
 const defaultBrowser = (process.env.PLAYWRIGHT_BROWSER || 'chromium') as 'chromium' | 'webkit' | 'firefox';
 const defaultChannel = process.env.PLAYWRIGHT_CHANNEL || (defaultBrowser === 'chromium' ? 'chrome' : undefined);
+const reuseExistingServer = !process.env.CI && process.env.PLAYWRIGHT_REUSE_SERVER === '1';
 
 export default defineConfig({
   testDir: 'e2e',
@@ -22,9 +23,9 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: `pnpm run start -- --port ${port}`,
+    command: `npm run start -- --port ${port}`,
     url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer,
     timeout: 120_000,
   },
 });

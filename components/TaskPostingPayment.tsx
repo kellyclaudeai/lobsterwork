@@ -10,14 +10,28 @@ import {
 } from '@stripe/react-stripe-js';
 import { DollarSign, Loader2 } from 'lucide-react';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface PaymentFormProps {
+  fee: { amount: number; currency: string };
   onSuccess: (paymentIntentId: string) => void;
   onCancel: () => void;
 }
 
-function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
+function formatFee(amountInCents: number, currency: string) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amountInCents / 100);
+  } catch {
+    // Fallback: best-effort formatting if currency is invalid/unexpected.
+    return `$${(amountInCents / 100).toFixed(2)}`;
+  }
+}
+
+function PaymentForm({ fee, onSuccess, onCancel }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,8 +56,19 @@ function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
       if (submitError) {
         setError(submitError.message || 'Payment failed');
         setIsProcessing(false);
-      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        onSuccess(paymentIntent.id);
+      } else if (paymentIntent) {
+        if (paymentIntent.status === 'succeeded') {
+          onSuccess(paymentIntent.id);
+        } else if (paymentIntent.status === 'processing') {
+          setError('Payment is still processing. Please wait a moment and try again.');
+          setIsProcessing(false);
+        } else {
+          setError(`Payment not completed (status: ${paymentIntent.status}).`);
+          setIsProcessing(false);
+        }
+      } else {
+        setError('Payment failed');
+        setIsProcessing(false);
       }
     } catch {
       setError('An unexpected error occurred');
@@ -56,7 +81,10 @@ function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
       <div className="alert alert-info">
         <DollarSign className="w-5 h-5" />
         <div>
-          <p className="font-bold">Task Posting Fee: $1.00 USD</p>
+          <p className="font-bold">
+            Task Posting Fee: {formatFee(fee.amount, fee.currency)}{' '}
+            {fee.currency.toUpperCase()}
+          </p>
           <p className="text-sm">One-time payment to list your task on LobsterWork 🦞</p>
         </div>
       </div>
@@ -91,7 +119,7 @@ function PaymentForm({ onSuccess, onCancel }: PaymentFormProps) {
           ) : (
             <>
               <DollarSign className="w-5 h-5" />
-              Pay $1 & Post Task
+              Pay {formatFee(fee.amount, fee.currency)} &amp; Post Task
             </>
           )}
         </button>
@@ -107,10 +135,15 @@ interface TaskPostingPaymentProps {
 
 export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingPaymentProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [fee, setFee] = useState<{ amount: number; currency: string } | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!stripePromise) return;
+
     // Create payment intent when component mounts
     fetch('/api/create-payment-intent', {
       method: 'POST',
@@ -126,6 +159,11 @@ export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingP
       })
       .then((data) => {
         setClientSecret(data.clientSecret);
+        if (typeof data.amount === 'number' && typeof data.currency === 'string') {
+          setFee({ amount: data.amount, currency: data.currency });
+        } else {
+          setFee({ amount: 100, currency: 'usd' });
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -133,6 +171,19 @@ export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingP
         setLoading(false);
       });
   }, []);
+
+  if (!stripePromise) {
+    return (
+      <div className="card">
+        <div className="alert alert-error">
+          Missing Stripe publishable key. Set <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> in your environment.
+        </div>
+        <button onClick={onCancel} className="btn btn-secondary mt-4 w-full">
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -158,7 +209,7 @@ export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingP
     );
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !fee) {
     return null;
   }
 
@@ -166,7 +217,8 @@ export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingP
     <div className="card">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Complete Payment</h2>
       <p className="text-gray-700 mb-6">
-        Pay the $1 task posting fee to publish your task to the marketplace
+        Pay the {formatFee(fee.amount, fee.currency)} task posting fee to publish your task to the
+        marketplace
       </p>
 
       <Elements
@@ -181,7 +233,7 @@ export default function TaskPostingPayment({ onSuccess, onCancel }: TaskPostingP
           },
         }}
       >
-        <PaymentForm onSuccess={onSuccess} onCancel={onCancel} />
+        <PaymentForm fee={fee} onSuccess={onSuccess} onCancel={onCancel} />
       </Elements>
     </div>
   );

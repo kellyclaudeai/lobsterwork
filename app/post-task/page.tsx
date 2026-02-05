@@ -7,7 +7,7 @@ import { DollarSign, Calendar, Target, FileText, ArrowLeft } from 'lucide-react'
 import { createTask } from '@/services/api';
 import Navigation from '@/components/Navigation';
 import TaskPostingPayment from '@/components/TaskPostingPayment';
-import type { CreateTaskInput } from '@/types';
+import type { CreateTaskDraftInput } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export default function PostTask() {
   const [step, setStep] = useState<Step>('form');
   const [error, setError] = useState('');
 
-  const [formData, setFormData] = useState<CreateTaskInput>({
+  const [formData, setFormData] = useState<CreateTaskDraftInput>({
     title: '',
     description: '',
     budget_min: 0,
@@ -264,7 +264,7 @@ export default function PostTask() {
                 <div className="alert alert-info">
                   <DollarSign className="w-5 h-5" />
                   <div>
-                    <p className="font-bold">Task Posting Fee: $1.00</p>
+                    <p className="font-bold">Task Posting Fee</p>
                     <p className="text-sm">Next step: secure payment to publish your task</p>
                   </div>
                 </div>

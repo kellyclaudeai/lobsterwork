@@ -35,7 +35,7 @@ test.describe('Auth Flow - Login', () => {
 
     // Check for success message (or error if Supabase is unreachable)
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });
@@ -128,7 +128,7 @@ test.describe('Auth Flow - Signup', () => {
 
     // Check for success message (or error if Supabase is unreachable)
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });
@@ -150,7 +150,7 @@ test.describe('Auth Flow - Signup', () => {
 
     // Check for success or error message
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });

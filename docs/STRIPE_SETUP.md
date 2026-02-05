@@ -3,18 +3,28 @@
 ## What's Implemented
 
 ✅ $1 USD task posting fee  
-✅ Stripe Checkout integration  
+✅ Stripe Elements + PaymentIntents (in-app payment form)  
 ✅ Payment verification before task creation  
 ✅ Webhook handling for payment confirmation  
 ✅ Database tracking of all payments
 
 ## Running Locally
 
+### 0. (Optional) Create the Stripe Product + Price
+
+If you want the fee to be driven by a Stripe Price (recommended), run:
+
+```bash
+./scripts/stripe/setup-task-posting-fee.sh
+```
+
+Then add the printed `STRIPE_TASK_POSTING_PRICE_ID=...` to `.env.local`.
+
 ### 1. Start the Development Server
 
 ```bash
 cd ~/.openclaw/projects/lobsterwork
-npm run dev
+pnpm run dev
 ```
 
 ### 2. Start Stripe Webhook Listener (in a new terminal)
@@ -62,12 +72,15 @@ Restart your dev server after updating the secret.
 - `4000 0000 0000 0002` - Card declined
 - `4000 0000 0000 9995` - Insufficient funds
 
-## Stripe Products Created
+## Stripe Price (Optional)
 
-- **Product ID:** `prod_Tv9kWr2u4ZAmAq`
-- **Price ID:** `price_1SxJRNLyZSl6pdhmOtfEpPhw`
-- **Amount:** $1.00 USD (100 cents)
-- **Type:** One-time payment
+This project supports using a Stripe Price to define the $1 fee via:
+
+```bash
+STRIPE_TASK_POSTING_PRICE_ID=price_...
+```
+
+If that env var is not set, the app falls back to a hardcoded `$1.00 USD`.
 
 ## Database Schema
 
@@ -99,20 +112,28 @@ Creates a Stripe PaymentIntent for $1 task posting fee.
 ```json
 {
   "clientSecret": "pi_xxx_secret_xxx",
-  "paymentIntentId": "pi_xxx"
+  "paymentIntentId": "pi_xxx",
+  "amount": 100,
+  "currency": "usd"
 }
 ```
+
+### POST /api/tasks
+Creates a task after verifying the Stripe PaymentIntent is succeeded and unused.
 
 ### POST /api/webhooks/stripe
 Receives Stripe webhook events.
 
 **Events handled:**
-- `payment_intent.succeeded` - Marks payment as succeeded in database
-- `payment_intent.payment_failed` - Logs failure
+- `payment_intent.succeeded` - Marks payment as `succeeded`
+- `payment_intent.payment_failed` - Marks payment as `failed`
+- `payment_intent.canceled` - Marks payment as `failed`
+
+Note: `pending` payments are recorded immediately when `/api/create-payment-intent` creates the PaymentIntent.
 
 ## Security
 
-- ✅ Payment verification before task creation
+- ✅ Server-side Stripe verification before task creation (no webhook race condition)
 - ✅ One payment = one task (prevents reuse)
 - ✅ User ownership check
 - ✅ Webhook signature verification
@@ -139,7 +160,10 @@ Receives Stripe webhook events.
 - Check Next.js terminal for webhook handler logs
 
 **Database errors**
-- Run the migration: `003_task_posting_payments.sql`
+- Run the migrations:
+  - `003_task_posting_payments.sql`
+  - `004_create_task_with_payment.sql`
+  - `005_lock_down_task_inserts.sql`
 - Verify Supabase connection is working
 - Check RLS policies allow service role writes
 
