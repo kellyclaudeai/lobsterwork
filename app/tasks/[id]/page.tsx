@@ -17,6 +17,7 @@ import { getTask, createBid, acceptBid, getBidsForTask } from '@/services/api';
 import { createClient } from '@/lib/supabase/client';
 import Navigation from '@/components/Navigation';
 import type { Task, Bid, CreateBidInput } from '@/types';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export default function TaskDetail() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidData, setBidData] = useState<CreateBidInput>({
     task_id: params.id as string,
@@ -57,8 +58,8 @@ export default function TaskDetail() {
       ]);
       setTask(taskData);
       setBids(bidsData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load task');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load task');
     } finally {
       setLoading(false);
     }
@@ -80,8 +81,8 @@ export default function TaskDetail() {
         estimated_completion: '',
       });
       await loadTask();
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit bid');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to submit bid');
     } finally {
       setSubmitting(false);
     }
@@ -93,8 +94,8 @@ export default function TaskDetail() {
     try {
       await acceptBid(bidId);
       await loadTask();
-    } catch (err: any) {
-      setError(err.message || 'Failed to accept bid');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to accept bid');
     }
   };
 

@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Plus, Menu, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface NavigationProps {
   variant?: 'transparent' | 'solid';
 }
 
 export default function Navigation({ variant = 'solid' }: NavigationProps) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {

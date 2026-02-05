@@ -74,6 +74,7 @@ export interface CreateTaskInput {
   preferred_worker_type?: UserType;
   deadline?: string;
   category?: string;
+  payment_intent_id?: string;
 }
 
 export interface CreateBidInput {

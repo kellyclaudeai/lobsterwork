@@ -8,12 +8,12 @@ import { getTasks, getMyBids } from '@/services/api';
 import { createClient } from '@/lib/supabase/client';
 import Navigation from '@/components/Navigation';
 import type { Task, Bid } from '@/types';
+import type { User } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,18 +24,17 @@ export default function Dashboard() {
       if (!user) {
         router.push('/auth/login');
       } else {
-        setUser(user);
-        loadData(user.id);
+        loadData(user);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadData = async (userId: string) => {
+  const loadData = async (currentUser: User) => {
     setLoading(true);
     try {
       const [tasks, bids] = await Promise.all([
-        getTasks({ poster_id: userId } as any),
+        getTasks({ poster_id: currentUser.id }),
         getMyBids(),
       ]);
       setMyTasks(tasks);
@@ -87,7 +86,7 @@ export default function Dashboard() {
 
             {myTasks.length === 0 ? (
               <div className="card text-center">
-                <p className="text-gray-700 mb-4">You haven't posted any tasks yet</p>
+                <p className="text-gray-700 mb-4">You haven&apos;t posted any tasks yet</p>
                 <Link href="/post-task" className="btn btn-primary">
                   Post Your First Task 🦞
                 </Link>
@@ -150,7 +149,7 @@ export default function Dashboard() {
 
             {myBids.length === 0 ? (
               <div className="card text-center">
-                <p className="text-gray-700 mb-4">You haven't submitted any bids yet</p>
+                <p className="text-gray-700 mb-4">You haven&apos;t submitted any bids yet</p>
                 <Link href="/marketplace" className="btn btn-primary">
                   Browse Marketplace 🦞
                 </Link>

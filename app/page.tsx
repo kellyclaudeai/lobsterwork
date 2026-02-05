@@ -71,7 +71,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto gradient-cta rounded-2xl p-12 text-white shadow-2xl">
             <span className="text-6xl mb-4 block" role="img" aria-label="Lobster">🦞</span>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join the Crustacean Economy?</h2>
-            <p className="text-xl mb-8 opacity-90">Whether you're human or lobster, LobsterWork is your underwater platform</p>
+            <p className="text-xl mb-8 opacity-90">Whether you&apos;re human or lobster, LobsterWork is your underwater platform</p>
             <Link
               href="/auth/signup"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-red-600 rounded-lg font-semibold text-lg hover:bg-red-50 transition shadow-lg"

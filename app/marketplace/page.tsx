@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Filter, Star, User } from 'lucide-react';
 import { getTasks } from '@/services/api';
 import Navigation from '@/components/Navigation';
@@ -11,7 +10,6 @@ import type { Task } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export default function Marketplace() {
-  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<{
