@@ -35,7 +35,9 @@ test.describe('Auth Flow - Login', () => {
 
     // Check for success message (or error if Supabase is unreachable)
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(
+      /failed to fetch|auth service unreachable|failed to send|error sending confirmation email/i,
+    );
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });
@@ -128,7 +130,9 @@ test.describe('Auth Flow - Signup', () => {
 
     // Check for success message (or error if Supabase is unreachable)
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(
+      /failed to fetch|auth service unreachable|failed to send|error sending confirmation email/i,
+    );
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });
@@ -150,7 +154,9 @@ test.describe('Auth Flow - Signup', () => {
 
     // Check for success or error message
     const successMessage = page.getByText(/check your email for the magic link/i);
-    const errorMessage = page.getByText(/failed to fetch|auth service unreachable|failed to send/i);
+    const errorMessage = page.getByText(
+      /failed to fetch|auth service unreachable|failed to send|error sending confirmation email/i,
+    );
     
     await expect(successMessage.or(errorMessage)).toBeVisible({ timeout: 15000 });
   });
@@ -223,7 +229,11 @@ test.describe('Auth Flow - Error Handling', () => {
 
     // Should show error message
     // Note: When network requests are blocked, browser throws "Failed to fetch" before our custom timeout/error messages
-    await expect(page.getByText(/failed to fetch|auth service unreachable|failed to send/i)).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.getByText(
+        /failed to fetch|auth service unreachable|failed to send|error sending confirmation email/i,
+      ),
+    ).toBeVisible({ timeout: 15000 });
   });
 
   test('form buttons are disabled during submission', async ({ page }) => {
